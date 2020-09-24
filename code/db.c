@@ -20,7 +20,7 @@ int get_m() {
 
     printf("----customer-[id:%d]----\n", id);
     if (customer.id != id)
-        printf("Customer with id : %d not found\n", id);
+        perror("Customer with this id not found");
     else{
         printf("    id : %d\n  name : %s\ne-mail : %s\n",
                customer.id, customer.name, customer.e_mail);
@@ -54,23 +54,72 @@ int get_s(){
     }
 
     if (project.id_of_customer != id)
-        printf("Project with id : %d not found\n", id);
+        perror("Project with this id not found");
 
     fclose(fp);
     return 0;
 }
 
+int del_m(){
+    int num;
+
+    __ut_m_small();
+    printf("enter [id] of customer:\n");
+    scanf("%d", &num);
+
+    __del_m_by_id(num);
+}
+
+int del_s(){
+    int num;
+
+    __ut_s_small();
+    printf("enter [number] of project:\n");
+    scanf("%d", &num);
+
+    __del_s_by_num(num);
+}
+
+int update_m(){
+    int id;
+
+    __ut_m_small();
+    printf("enter an [id]:\n");
+    scanf("%d", &id);
+
+    return __update_m_by_id(id);
+};
+
+int update_s(){
+    int num;
+
+    __ut_s_small();
+    printf("enter a [number]:\n");
+    scanf("%d", &num);
+
+    return __update_s_by_num(num);
+};
+
 int insert_m() {
     FILE *fp;
     struct Customer customer;
+    int id;
 
-    if ((fp = fopen(CUSTOMERS_PATH, "ab")) == NULL) {
+    if ((fp = fopen(CUSTOMERS_PATH, "a+b")) == NULL) {
         perror("Error occured while opening file");
         return 1;
     }
 
     printf("id of customer(int): ");
-    scanf("%d", &customer.id);
+    scanf("%d", &id);
+
+    while(fread(&customer, sizeof(struct Customer), 1, fp) == 1){
+        if(id == customer.id){
+            perror("Customer with this id is already exist");
+            return 0;
+        }
+    }
+
     printf("%s", "name of customer(char[255]): ");
     scanf(" %s", customer.name);
     printf("%s", "e-mail of customer(char[255]): ");
@@ -103,46 +152,6 @@ int insert_s(){
     fwrite(&project, sizeof(struct Project), 1, fp);
     fclose(fp);
     return 0;
-}
-
-int update_m(){
-    int id;
-
-    __ut_m_small();
-    printf("enter an [id]:\n");
-    scanf("%d", &id);
-
-    return __update_m_by_id(id);
-};
-
-int update_s(){
-    int num;
-
-    __ut_s_small();
-    printf("enter a [number]:\n");
-    scanf("%d", &num);
-
-    return __update_s_by_num(num);
-};
-
-int del_m(){
-    int num;
-
-    __ut_m_small();
-    printf("enter [id] of customer:\n");
-    scanf("%d", &num);
-
-    __del_m_by_id(num);
-}
-
-int del_s(){
-    int num;
-
-    __ut_s_small();
-    printf("enter [number] of project:\n");
-    scanf("%d", &num);
-
-    __del_s_by_num(num);
 }
 
 int ut_m(){
@@ -236,6 +245,7 @@ int count_s(){
 int __del_m_by_id(int id){
     FILE *get_file;
     FILE *put_file;
+    int is_found = 0;
 
     struct Customer customer;
 
@@ -251,20 +261,26 @@ int __del_m_by_id(int id){
     while (fread(&customer, sizeof(struct Customer), 1, get_file) == 1) {
         if(customer.id != id)
             fwrite(&customer, sizeof(struct Customer), 1, put_file);
+        else
+            is_found = 1;
     }
 
     fclose(get_file);
     fclose(put_file);
 
-    __del_s_by_id(id);
+    if(is_found){
+        __del_s_by_id(id);
 
-    remove(CUSTOMERS_PATH);
-    return rename(CUSTOMERS_TEMP_PATH, CUSTOMERS_PATH);
+        remove(CUSTOMERS_PATH);
+        return rename(CUSTOMERS_TEMP_PATH, CUSTOMERS_PATH);
+    } else
+        perror("Customer with this id not found");
 }
 
 int __del_s_by_num(int num){
     FILE *get_file;
     FILE *put_file;
+    int is_found = 0;
 
     struct Project project;
 
@@ -282,14 +298,19 @@ int __del_s_by_num(int num){
     while (fread(&project, sizeof(struct Project), 1, get_file) == 1) {
         if(index != num)
             fwrite(&project, sizeof(struct Project), 1, put_file);
+        else
+            is_found = 1;
         index++;
     }
 
     fclose(get_file);
     fclose(put_file);
 
-    remove(PROJECT_PATH);
-    return rename(PROJECT_TEMP_PATH, PROJECT_PATH);
+    if(is_found){
+        remove(PROJECT_PATH);
+        return rename(PROJECT_TEMP_PATH, PROJECT_PATH);
+    }else
+        perror("Project with this number not found");
 }
 
 int __del_s_by_id(int id){
@@ -323,6 +344,7 @@ int __update_m_by_id(int id){
     FILE *fp;
     struct Customer customer;
     int property;
+    int is_found = 0;
 
     if ((fp = fopen(CUSTOMERS_PATH, "r+b")) == NULL) {
         perror("Error occured while opening file");
@@ -330,7 +352,15 @@ int __update_m_by_id(int id){
     }
 
     while (fread(&customer, sizeof(struct Customer), 1, fp) == 1) {
-        if(customer.id == id) break;
+        if(customer.id == id) {
+            is_found = 1;
+            break;
+        }
+    }
+
+    if(!is_found){
+        perror("Customer with this id not found");
+        return 0;
     }
 
     __ut_m_by_struct(&customer);
@@ -346,7 +376,8 @@ int __update_m_by_id(int id){
             printf("enter the [new e-mail]:\n");
             scanf("%s", customer.e_mail);
             break;
-
+        default:
+            perror("Number not found");
     }
 
     fseek(fp, -sizeof(struct Customer), SEEK_CUR);
@@ -361,6 +392,7 @@ int __update_s_by_num(int num){
     struct Project project;
     int index = 1;
     int property;
+    int is_found = 0;
 
     if ((fp = fopen(PROJECT_PATH, "r+b")) == NULL) {
         perror("Error occured while opening file");
@@ -368,8 +400,16 @@ int __update_s_by_num(int num){
     }
 
     while (fread(&project, sizeof(struct Project), 1, fp) == 1) {
-        if(index == num) break;
+        if(index == num) {
+            is_found = 1;
+            break;
+        }
         index++;
+    }
+
+    if(!is_found){
+        perror("Project with this number not found");
+        return 0;
     }
 
     __ut_s_by_struct(&project);
@@ -389,6 +429,8 @@ int __update_s_by_num(int num){
             printf("enter the [new description]:\n");
             scanf("%s", project.description);
             break;
+        default:
+            perror("Number not found");
     }
 
     fseek(fp, -sizeof(struct Project), SEEK_CUR);
@@ -476,14 +518,6 @@ void help(){
            "[12] ut-s\n"
            "[13] end\n");
     printf("----------enter: ");
-}
-
-int __char_equals(char *ch1, char *ch2) {
-    for (int i = 0; i < SIZE; i++) {
-        if (ch1[i] != ch2[i]) return 0;
-        if (ch1[i] == '\0') break;
-    }
-    return 1;
 }
 
 

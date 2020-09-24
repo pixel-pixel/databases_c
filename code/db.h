@@ -24,17 +24,17 @@ int get_m();
 
 int get_s();
 
-int insert_m();
+int del_m();
 
-int insert_s();
+int del_s();
 
 int update_m();
 
 int update_s();
 
-int del_m();
+int insert_m();
 
-int del_s();
+int insert_s();
 
 int ut_m();
 
@@ -64,6 +64,5 @@ int __ut_s_small();
 
 void help();
 
-int __char_equals(char *ch1, char *ch2);
 
 #endif //BD_DB_H
