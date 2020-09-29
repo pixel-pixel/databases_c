@@ -120,6 +120,7 @@ int insert_m() {
         }
     }
 
+    customer.id = id;
     printf("%s", "name of customer(char[255]): ");
     scanf(" %s", customer.name);
     printf("%s", "e-mail of customer(char[255]): ");
@@ -273,8 +274,11 @@ int __del_m_by_id(int id){
 
         remove(CUSTOMERS_PATH);
         return rename(CUSTOMERS_TEMP_PATH, CUSTOMERS_PATH);
-    } else
+    } else{
+        remove(CUSTOMERS_TEMP_PATH);
         perror("Customer with this id not found");
+    }
+
 }
 
 int __del_s_by_num(int num){
@@ -309,8 +313,11 @@ int __del_s_by_num(int num){
     if(is_found){
         remove(PROJECT_PATH);
         return rename(PROJECT_TEMP_PATH, PROJECT_PATH);
-    }else
+    }else{
+        remove(PROJECT_TEMP_PATH);
         perror("Project with this number not found");
+    }
+
 }
 
 int __del_s_by_id(int id){
